@@ -41,7 +41,9 @@ Please also download the following files from [Google Drive](https://drive.googl
 - `main_metadata$radiant_score`: The total score of Radiant in a match. Each kill in the match +1 score. Note that a higher Radiant score compared to Dire score does not necessarily means Radiant won. For instance, in `main_metadata$match_id == 7517444274`, `main_metadata$radiant_score == 42`, `main_metadata$dire_score == 30`, yet `main_metadata$radiant_win == FALSE`. This is a comeback scenario where Dire was originally behind, but won finally.
 - `main_metadata$dire_score`: The total score of Dire in a match. The score equals to the total deaths of Radiant. The common sense is that the more deaths, the lower likelihood of winning. 
 - Numbers of team fights. Data processing is required here. Count the total observations for each match in `teamfights$match_id`.
-- Total length of team fights. Data processing is required here. First group by `teamfights$match_id`, then `sum(end-start)`. The team fight data probe the question "whether collaboration increases the chance to win". For instance, if more and longer teamfights are correlated with higher winning probability, this enourages collboration vs. more independent oriented strategies. 
+- Total length of team fights. Data processing is required here. First group by `teamfights$match_id`, then `sum(end-start)`. The team fight data probe the question "whether collaboration increases the chance to win". For instance, if more and longer teamfights are correlated with higher winning probability, this enourages collboration vs. more independent oriented strategies.
+- `radiant_exp_adv$exp` when `minute == 15`. People want to know whether Radiant will win BEFORE the game ends. The experience value at 15 mins shows how Radiant is performing at half way. It will be interesting to see whether halfway performance predict anything about the final result. Similarly, we can check half way gold:
+- `radiant_gold_adv$exp` when `minute == 15`.
 
 ### TBD
 
