@@ -30,18 +30,18 @@ Please also download the following files from [Google Drive](https://drive.googl
 - `main_metadata$duration`: The total time of the match (in seconds). 
 
 ### Categorial factors:
-- `main_metadata$radiant_team_id`: Each team has a unique id.
-- `main_metadata$dire_team_id`: Each team has a unique id. (useful for checking which team played against the radiant team as win/lose may depend on it)
-- `main_metadata$region`: Where the game took place.
+- `main_metadata$radiant_team_id`: Each team has a unique id. Which team played Radiant (Stronger teams tend to win).
+- `main_metadata$dire_team_id`: Each team has a unique id. Which team was against Radiant (Stronger opponents make Radiant more likely to lose). 
+- `main_metadata$region`: Where the game took place. (Certain regions may have longer games)
 - Heroes picked: Which heroes are involved in the match. Data processing required here. `picks_bans$is_picked == TRUE`, group by `picks_bans$match_id`
 - Heroes banned: Which heroes are banned in the match. Data processing required here. `picks_bans$is_picked == FALSE`, group by `picks_bans$match_id`
 
 ### Continuous factors:
-- `main_metadata$first_blood_time`: First Blood Time refers to the game time (in seconds) when the first kill of the match happens — that is, when one hero kills another for the first time in the game. Notice that in some observations, `main_metadata$first_blood_time == 0`. This is because in some rare cases, first kill happens during the preparation period, when the match was not officially started. 
+- `main_metadata$first_blood_time`: First Blood Time refers to the game time (in seconds) when the first kill of the match happens — that is, when one hero kills another for the first time in the game. Notice that in some observations, `main_metadata$first_blood_time == 0`. This is because in some rare cases, first kill happens during the preparation period, when the match was not officially started. We will probably filter out `main_metadata$first_blood_time == 0` data as 0 is not numeric here. 
 - `main_metadata$radiant_score`: The total score of Radiant in a match. Each kill in the match +1 score. Note that a higher Radiant score compared to Dire score does not necessarily means Radiant won. For instance, in `main_metadata$match_id == 7517444274`, `main_metadata$radiant_score == 42`, `main_metadata$dire_score == 30`, yet `main_metadata$radiant_win == FALSE`. This is a comeback scenario where Dire was originally behind, but won finally.
-- `main_metadata$dire_score`: The total score of Dire in a match. The score equals to the total deaths of Radiant. 
+- `main_metadata$dire_score`: The total score of Dire in a match. The score equals to the total deaths of Radiant. The common sense is that the more deaths, the lower likelihood of winning. 
 - Numbers of team fights. Data processing is required here. Count the total observations for each match in `teamfights$match_id`.
-- Total length of team fights. Data processing is required here. First group by `teamfights$match_id`, then `sum(end-start)`.
+- Total length of team fights. Data processing is required here. First group by `teamfights$match_id`, then `sum(end-start)`. The team fight data probe the question "whether collaboration increases the chance to win". For instance, if more and longer teamfights are correlated with higher winning probability, this enourages collboration vs. more independent oriented strategies. 
 
 ### TBD
 
@@ -49,6 +49,8 @@ There are four very interesting values: Throw, Loss, Comeback, Stomp. I'm trying
   
 ## EDA questions:
 - Of course, we want to know what makes Radiant win. `main_metadata$radiant_team_id` will definitely play a role, as some teams are better than others. `main_metadata$radiant_score` will be a  influential factor, as the common knowledge goes like, the more one kills, the more likely one wins.
+- We also want to know what makes a game long. For instance, is there a correlation between certain heroes and the game length? Maybe the more team fights the longer the game?
+- Is collaboration helpful? (Gamers view is that not necessarily but we will see what the data says). 
 - We also want to know what makes a game long. For instance, is there a correlation between certain heroes and the game length? Maybe the more team fights the longer the game? 
 
 
