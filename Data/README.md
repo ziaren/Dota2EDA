@@ -53,7 +53,8 @@ There are four very interesting values: Throw, Loss, Comeback, Stomp. I'm trying
 - Of course, we want to know what makes Radiant win. `main_metadata$radiant_team_id` will definitely play a role, as some teams are better than others. `main_metadata$radiant_score` will be a  influential factor, as the common knowledge goes like, the more one kills, the more likely one wins.
 - We also want to know what makes a game long. For instance, is there a correlation between certain heroes and the game length? Maybe the more team fights the longer the game?
 - Is collaboration helpful? (Gamers view is that not necessarily but we will see what the data says). 
-- We also want to know what makes a game long. For instance, is there a correlation between certain heroes and the game length? Maybe the more team fights the longer the game? 
+- We also want to know what makes a game long. For instance, is there a correlation between certain heroes and the game length? Maybe the more team fights the longer the game?
+- Does halfway performance predict anything about the final result.  
 
 
 
