@@ -31,7 +31,7 @@ Please also download the following files from [Google Drive](https://drive.googl
 
 ### Categorial factors:
 - `main_metadata$radiant_team_id`: Each team has a unique id.
-- `main_metadata$dire_team_id`: Each team has a unique id.
+- `main_metadata$dire_team_id`: Each team has a unique id. (useful for checking which team played against the radiant team as win/lose may depend on it)
 - `main_metadata$region`: Where the game took place.
 - Heroes picked: Which heroes are involved in the match. Data processing required here. `picks_bans$is_picked == TRUE`, group by `picks_bans$match_id`
 - Heroes banned: Which heroes are banned in the match. Data processing required here. `picks_bans$is_picked == FALSE`, group by `picks_bans$match_id`
