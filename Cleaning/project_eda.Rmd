@@ -1,0 +1,184 @@
+---
+title: "projectEDA"
+author: "Jerry Obour"
+date: "2025-04-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r packages, warning=FALSE}
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+library(ggplot2)
+library(plotly)
+library(leaps)
+```
+#### EDA
+
+```{r loading-data}
+df <- read.csv("C:/Users/Jerry Bodman/Desktop/Homework files/df_sample.csv")
+str(df)
+```
+
+```{r changing-IDtypes}
+df$region <- as.factor(df$region)
+df$radiant_team_id <- as.factor(df$radiant_team_id)
+df$dire_team_id <- as.factor(df$dire_team_id)
+df <- df %>% select(-leagueid) # drop leagueid as will not be useful for our course.
+df$match_id <- as.factor(df$match_id)
+str(df)
+
+```
+
+```{r colnames}
+colnames(df)
+
+```
+
+```{r numeric-vars}
+
+numeric_vars <- names(df)[sapply(df, is.numeric)]
+numeric_vars
+
+```
+
+```{r strength-attribute}
+
+selected_vars <- c("Strength_banned_r", "Strength_picked_d","Strength_banned_r", "Strength_banned_d")  # replace with your actual variable names
+selected_vars <- selected_vars[selected_vars %in% numeric_vars]
+selected_df <- df[, selected_vars]
+
+numeric_long <- selected_df %>%
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Value")
+numeric_long <- numeric_long %>% filter(Value != "0")
+ggplot(numeric_long, aes(x = Value)) +
+  geom_bar(fill = "tomato", color = "black") +
+  facet_wrap(~ Variable, scales = "free", ncol = 2) +
+  theme_minimal() +
+  labs(title = "Histograms of Strength For Radiant-r and Dire-d")
+
+```
+
+```{r Agility-attribute}
+
+selected_vars <- c("Agility_picked_r", "Agility_picked_d","Agility_banned_r", "Agility_banned_d")  # replace with your actual variable names
+selected_vars <- selected_vars[selected_vars %in% numeric_vars]
+selected_df <- df[, selected_vars]
+
+numeric_long <- selected_df %>%
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Value")
+numeric_long <- numeric_long %>% filter(Value != "0")
+ggplot(numeric_long, aes(x = Value)) +
+  geom_bar(fill = "purple", color = "black") +
+  facet_wrap(~ Variable, scales = "free", ncol = 2) +
+  theme_minimal() +
+  labs(title = "Histograms of Agility For Radiant-r and Dire-d")
+
+```
+
+
+```{r Intelligence-attribute}
+
+selected_vars <- c("Intelligence_picked_r", "Intelligence_picked_d","Intelligence_banned_r", "Intelligence_banned_d")  # replace with your actual variable names
+selected_vars <- selected_vars[selected_vars %in% numeric_vars]
+selected_df <- df[, selected_vars]
+
+numeric_long <- selected_df %>%
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Value")
+
+numeric_long <- numeric_long %>% filter(Value != "0")
+
+ggplot(numeric_long, aes(x = Value)) +
+  geom_bar(fill = "steelblue", color = "black") +
+  facet_wrap(~ Variable, scales = "free", ncol = 2) +
+  theme_minimal() +
+  labs(title = "Histograms of Intelligence For Radiant-r and Dire-d")
+
+```
+
+```{r Universal-attribute}
+
+selected_vars <- c("Universal_picked_r", "Universal_picked_d","Universal_banned_r", "Universal_banned_d")  # replace with your actual variable names
+selected_vars <- selected_vars[selected_vars %in% numeric_vars]
+selected_df <- df[, selected_vars]
+
+numeric_long <- selected_df %>%
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Value")
+
+numeric_long <- numeric_long %>% filter(Value != "0")
+
+ggplot(numeric_long, aes(x = Value)) +
+  geom_bar(fill = "skyblue", color = "black") +
+  facet_wrap(~ Variable, scales = "free", ncol = 2) +
+  theme_minimal() +
+  labs(title = "Histograms of Selected Numeric Variables")
+
+```
+
+```{r score-fight-death}
+
+selected_vars <- c("dire_score", "radiant_score","teamfight_frequency", "Tteamfight_deaths")  # replace with your actual variable names
+selected_vars <- selected_vars[selected_vars %in% numeric_vars]
+selected_df <- df[, selected_vars]
+
+numeric_long <- selected_df %>%
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Value")
+
+numeric_long <- numeric_long %>% filter(Value != "0")
+
+ggplot(numeric_long, aes(x = Value)) +
+  geom_histogram(bins = 30, fill = "darkgreen", color = "black") +
+  facet_wrap(~ Variable, scales = "free", ncol = 2) +
+  theme_minimal() +
+  labs(title = "Histograms of Score, Teamfight Frequency and Teamfight Deaths")
+
+```
+
+
+```{r categorical-variables}
+
+categorical_vars <- names(df)[sapply(df, function(x) is.factor(x) || is.character(x))]
+categorical_vars
+
+```
+
+```{r}
+
+selected_vars <- c("region", "radiant_win")  # replace with your actual variable names
+selected_vars <- selected_vars[selected_vars %in% categorical_vars]
+selected_df <- df[, selected_vars]
+
+categorical_long <- selected_df %>%
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Value")
+
+#categorical_long <- categorical_long %>% filter(Value != "0")
+
+ggplot(categorical_long, aes(x = Value)) +
+  geom_bar(fill = "grey", color = "black") +
+  facet_wrap(~ Variable, scales = "free", ncol = 2) +
+  theme_minimal() +
+  labs(title = "Histograms of Score, Teamfight Frequency and Teamfight Deaths")
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
