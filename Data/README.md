@@ -1,7 +1,7 @@
 # Dota 2 Match Data
 
 This folder contains 2024 Dota 2 Pro League Matches data used for exploratory data analysis (EDA). 
-
+-- note:: forgot to drop NA's in region column find useful code :: df_clean <- df1246_vars[!is.na(df1246_vars$region), ] replace the names duly. 
 ## EDA questions:
 1. What helps Radiant win.
    - `main_metadata$radiant_team_id`: some teams are better than others.
