@@ -75,13 +75,17 @@ head(df6)
 # selecting the important columns in df1 main data::
 colnames(df1)
 df1_vars <- df1 %>%
-  select(match_id,leagueid,region,duration,first_blood_time,dire_score,radiant_score,radiant_team_id,dire_team_id,radiant_win)
+  drop_na() %>%
+  filter(first_blood_time != 0) %>%
+  select(match_id, leagueid, region, duration, first_blood_time, dire_score, radiant_score,
+         radiant_team_id, dire_team_id, radiant_win)
 
 head(df1_vars)
 nrow(df1_vars)
 
 # Here,we group by match_id and leagueid and extract experience.. vars -- mean extracted variables
 df2_vars <- df2 %>%
+  drop_na() %>%
   filter(minute=="15") %>%
   select(match_id,leagueid,exp_15min = exp)
 
@@ -95,13 +99,15 @@ df12_vars <- inner_join(df1_vars, df2_vars, by = c("match_id","leagueid"))
 #perform summary for df4 on the deaths and last deaths:: here's what happens -- for a specific match in a specific league, a team might fight a number of times 
 #and so we find the total duration used by the team for the fight by sum(end-start) for the match and league as well as the sum(deaths) - the number of deaths recorded.
 df4_vars <- df4 %>%
+  drop_na() %>%
   group_by(match_id, leagueid) %>%
   summarise(
     teamfight_duration = sum(end - start, na.rm = TRUE),
+    teamfight_frequency = n(),
     Tteamfight_deaths = sum(deaths),
     .groups = "drop"
   ) %>%
-  select(match_id,leagueid,teamfight_duration,Tteamfight_deaths)
+  select(match_id,leagueid,teamfight_duration,Tteamfight_deaths, teamfight_frequency)
 
 head(df4_vars)
 nrow(df4_vars)
@@ -112,6 +118,7 @@ df124_vars <- inner_join(df12_vars, df4_vars, by = c("match_id","leagueid"))
 
 head(df6)
 df6_ext1 <- df6 %>%
+drop_na() %>%
   mutate(
     radiant_pick = ifelse(is_pick == "True" & team == "1", hero_id, NA),
     radiant_ban  = ifelse(is_pick == "False" & team == "1", hero_id, NA),
