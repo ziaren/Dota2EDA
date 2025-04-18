@@ -1,0 +1,44 @@
+---
+title: "Quantitative outcome"
+author: "Jia Ren"
+date: "2025-04-18"
+output: html_document
+---
+
+# Load data
+
+```{r}
+df <- read.csv("/Users/ren/Downloads/df_sample.csv")
+```
+
+# Marginal simple linear regressions
+
+```{r}
+df$region <- as.factor(df$region)
+model_region <- lm(duration ~ region, data = df)
+summary(model_region)
+
+model_first_blood_time <- lm(duration ~ first_blood_time, data = df)
+summary(model_first_blood_time)
+
+model_teamfight_frequency <- lm(duration ~ teamfight_frequency, data = df)
+summary(model_teamfight_frequency)
+
+model_exp_15min <- lm(duration ~ exp_15min, data = df)
+summary(model_exp_15min)
+
+```
+
+# Multiple linear regression
+
+```{r}
+model_multiple1 <- lm(duration ~ region + first_blood_time + teamfight_frequency + exp_15min, data = df)
+summary(model_multiple1)
+
+model_multiple2 <- lm(duration ~ region + first_blood_time + teamfight_frequency + exp_15min + region*teamfight_frequency + first_blood_time*exp_15min, data = df)
+summary(model_multiple2)
+
+model_multiple3 <- lm(duration ~  region + poly(first_blood_time, 2) + teamfight_frequency + log(exp_15min), data = df)
+summary(model_multiple3)
+
+```
