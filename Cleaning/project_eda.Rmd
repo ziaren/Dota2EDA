@@ -170,15 +170,59 @@ ggplot(categorical_long, aes(x = Value)) +
 
 
 
+```{r corrplot, fig.width=10, fig.height=8}
+library(corrplot)
+
+cor_matrix <- cor(df[, numeric_vars], use = "complete.obs")
+corrplot(cor_matrix, method = "color", type = "full",tl.cex = 0.7)
 
 
+```
 
 
+```{r check-class-imbalance}
+table(df$radiant_win)
+prop.table(table(df$radiant_win))
+
+```
+
+```{r histogram-data}
+
+ggplot(df, aes(x = radiant_win)) +
+  geom_bar(fill = "orange", color = "black") +
+  labs(title = "Radiant Win Distribution")
 
 
+```
 
 
+```{r correlation-plot}
+library(GGally)
+
+ggpairs(df[, c("radiant_score", "dire_score", "teamfight_frequency", "Tteamfight_deaths")])
 
 
+```
 
 
+```{r check-outliers}
+
+ggplot(numeric_long, aes(y = Value)) +
+  geom_boxplot(fill = "lightblue") +
+  facet_wrap(~ Variable, scales = "free")
+
+```
+
+
+```{r region-radiantwin-interraction}
+
+df %>%
+  group_by(region, radiant_win) %>%
+  summarise(count = n()) %>%
+  ggplot(aes(x = region, y = count, fill = radiant_win)) +
+  geom_bar(stat = "identity", position = "fill") +
+  labs(title = "Win Rate by Region", y = "Proportion") +
+  theme_minimal()
+
+
+```
