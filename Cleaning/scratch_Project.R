@@ -154,7 +154,7 @@ head(int_hero_ids)
 ifelse(5 %in% int_hero_ids,44,35)
 
 typeof(df6$hero_id)
-whwhas.integer(df6$hero_id)
+as.integer(df6$hero_id)
 head(df6)
 # Create categorical variables: A strength hero is picked, A strength hero is banned, A Agility hero is picked, A Agility hero is banned, A Intelligence_picked hero is picked, A Intelligence_picked hero is banned, A Universal hero is picked, A Universal hero is banned, 
 
@@ -237,9 +237,12 @@ df1246_vars <- inner_join(df124_vars, df6_vars, by = c("match_id","leagueid"))
 nrow(df1246_vars)
 View(df1246_vars)
 
+df1246_vars <- df1246_vars %>%
+  filter(radiant_win != "" & !is.na(radiant_win))
+
 #colSums(is.na(df1246_vars))
 ## final data:: some things can be dropped  and here I pick a 10000
-df_sample <- df1246_vars[sample(nrow(df1246_vars), 10000), ]
+df_sample <- df1246_vars[sample(nrow(df1246_vars), 10000, replace = FALSE), ]
 
 
 write.csv(df_sample,"C:/Users/Jerry Bodman/Desktop/Homework files/df_sample.csv",row.names = FALSE)
