@@ -68,6 +68,14 @@ model2 <- glm(
 
 summary(model2)
 
+model3 <- glm(
+  radiant_win ~ first_blood_time + dire_score + radiant_score +
+    exp_15min + teamfight_duration + first_blood_time*exp_15min + dire_score*radiant_score,
+  data = df,
+  family = binomial(link = "logit")
+)
+summary(model3)
+
 AIC(model1, model2)
 ```
 
