@@ -1,0 +1,115 @@
+---
+title: "Qualitative outcomes"
+author: "Jia Ren"
+date: "2025-04-18"
+output: html_document
+---
+# Load data
+
+```{r}
+df <- read.csv("/Users/ren/Downloads/df_sample.csv")
+```
+
+# KNN 
+
+In this section we ask the question: can we predict whether Radiant will win/loss based on the hero selection. 
+
+```{r}
+library(class)
+df$radiant_win <- as.factor(df$radiant_win)
+df$radiant_team_id <- as.factor(df$radiant_team_id)
+df$dire_team_id <- as.factor(df$dire_team_id)
+predictor_vars <- c(
+  "Strength_picked_r", #"Strength_banned_r", "Strength_picked_d", "Strength_banned_d",
+  "Agility_picked_r", #"Agility_banned_r", "Agility_picked_d", "Agility_banned_d",
+  "Intelligence_picked_r", #"Intelligence_banned_r", "Intelligence_picked_d", "Intelligence_banned_d",
+  "Universal_picked_r" #, "Universal_banned_r", "Universal_picked_d", "Universal_banned_d"
+)
+df_knn <- df[, c(predictor_vars, "radiant_win")]
+df_knn[predictor_vars] <- lapply(df_knn[predictor_vars], function(x) as.numeric(as.character(x)))
+
+train_idx <- sample(1:nrow(df_knn), size = 0.7 * nrow(df_knn))
+
+train_X <- scale(df_knn[train_idx, predictor_vars])  
+test_X  <- scale(df_knn[-train_idx, predictor_vars],
+                 center = attr(train_X, "scaled:center"),
+                 scale  = attr(train_X, "scaled:scale"))
+
+train_y <- df_knn[train_idx, "radiant_win"]
+test_y  <- df_knn[-train_idx, "radiant_win"]
+
+pred_y <- knn(train = train_X, test = test_X, cl = train_y, k = 100)
+
+accuracy <- mean(pred_y == test_y)
+print(paste("Accuracy:", round(accuracy, 4)))
+```
+
+# Logistic regression
+
+```{r}
+model1 <- glm(
+  radiant_win ~ first_blood_time + dire_score + radiant_score +
+    exp_15min + teamfight_duration,
+  data = df,
+  family = binomial(link = "logit")
+)
+summary(model1)
+
+model2 <- glm(
+  radiant_win ~ 
+    poly(first_blood_time, 2) +                  
+    poly(dire_score, 2) +                      
+    log(radiant_score + 1) +                    
+    sqrt(exp_15min) +                            
+    teamfight_duration,            
+  data = df,
+  family = binomial
+)
+
+summary(model2)
+
+AIC(model1, model2)
+```
+
+# LDA
+
+```{r}
+library(MASS)
+X <- cbind(
+  df[, c("first_blood_time", "dire_score", "radiant_score", "exp_15min", "teamfight_duration")]
+)
+y <- df$radiant_win
+lda_model <- lda(x = X, grouping = y)
+lda_model
+```
+
+
+# QDA
+
+```{r}
+X_qda <- cbind(
+  df[, c("first_blood_time", "dire_score", "radiant_score", "exp_15min", "teamfight_duration")]
+)
+y_qda <- df$radiant_win
+```
+
+# Naive Bayes
+
+```{r}
+library(e1071)
+df_nb <- df[, c("radiant_win",
+                "first_blood_time", "dire_score", "radiant_score",
+                "exp_15min", "teamfight_duration")]
+set.seed(456)
+train_idx <- sample(1:nrow(df_nb), size = 0.7 * nrow(df_nb))
+train_nb <- df_nb[train_idx, ]
+test_nb <- df_nb[-train_idx, ]
+nb_model <- naiveBayes(radiant_win ~ ., data = train_nb)
+summary(nb_model)
+pred_class <- predict(nb_model, newdata = test_nb)
+pred_prob <- predict(nb_model, newdata = test_nb, type = "raw")
+table(Predicted = pred_class, Actual = test_nb$radiant_win)
+mean(pred_class == test_nb$radiant_win)
+```
+
+
