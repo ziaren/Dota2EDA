@@ -117,26 +117,75 @@ df124_vars <- inner_join(df12_vars, df4_vars, by = c("match_id","leagueid"))
 
 
 head(df6)
-df6_ext1 <- df6 %>%
-drop_na() %>%
-  mutate(
-    radiant_pick = ifelse(is_pick == "True" & team == "1", hero_id, NA),
-    radiant_ban  = ifelse(is_pick == "False" & team == "1", hero_id, NA),
-    dire_pick    = ifelse(is_pick == "True" & team == "0", hero_id, NA),
-    dire_ban     = ifelse(is_pick == "False" & team == "0", hero_id, NA)
-  )
+
+# read in Hero info csv
+
+heroes_df <- read.csv("Constants.Heroes.csv")
+
+# Create the list of the hero_ids of all Agility heroes
+
+agi_hero_ids <- heroes_df %>%
+  filter(primary_attr == "agi") %>%
+  pull(id) %>%
+  as.integer()
+
+# Create the list of the hero_ids of all Strength heroes
+
+str_hero_ids <- heroes_df %>%
+  filter(primary_attr == "str") %>%
+  pull(id) %>%
+  as.integer()
+
+# Create the list of the hero_ids of all Universal heroes
+
+all_hero_ids <- heroes_df %>%
+  filter(primary_attr == "all") %>%
+  pull(id) %>%
+  as.integer()
+
+# Create the list of the hero_ids of all Intelligence heroes
+
+int_hero_ids <- heroes_df %>%
+  filter(primary_attr == "int") %>%
+  pull(id) %>%
+  as.integer()
+
+as.integer(df6$hero_id)
+
+# Create categorical variables: A strength hero is picked, A strength hero is banned, A Agility hero is picked, A Agility hero is banned, A Intelligence_picked hero is picked, A Intelligence_picked hero is banned, A Universal hero is picked, A Universal hero is banned, 
+
+df6 <- df6 %>%
+  mutate(Strength_picked = factor(ifelse(hero_id %in% str_hero_ids & is_pick == "TRUE", 1, 0))) %>%
+  mutate(Strength_banned = factor(ifelse(hero_id %in% str_hero_ids & is_pick == "FALSE", 1, 0))) %>%
+  mutate(Agility_picked = factor(ifelse(hero_id %in% agi_hero_ids & is_pick == "TRUE", 1, 0))) %>%
+  mutate(Agility_banned = factor(ifelse(hero_id %in% agi_hero_ids & is_pick == "FALSE", 1, 0))) %>%
+  mutate(Intelligence_picked = factor(ifelse(hero_id %in% int_hero_ids & is_pick == "TRUE", 1, 0))) %>%
+  mutate(Intelligence_banned = factor(ifelse(hero_id %in% int_hero_ids & is_pick == "FALSE", 1, 0))) %>%
+  mutate(Universal_picked = factor(ifelse(hero_id %in% all_hero_ids & is_pick == "TRUE", 1, 0))) %>%
+  mutate(Universal_banned = factor(ifelse(hero_id %in% all_hero_ids & is_pick == "FALSE", 1, 0))) 
+
+head(df6)
+
+#df6_ext1 <- df6 %>%
+#drop_na() %>%
+#  mutate(
+#    radiant_pick = ifelse(is_pick == "True" & team == "1", hero_id, NA),
+#    radiant_ban  = ifelse(is_pick == "False" & team == "1", hero_id, NA),
+ #   dire_pick    = ifelse(is_pick == "True" & team == "0", hero_id, NA),
+  #  dire_ban     = ifelse(is_pick == "False" & team == "0", hero_id, NA)
+ # )
 
 
-df6_vars <- df6_ext1 %>%
-  group_by(match_id, leagueid) %>%
-  summarise(
-    radiant_pick = paste(na.omit(radiant_pick), collapse = ","),
-    radiant_ban  = paste(na.omit(radiant_ban), collapse = ","),
-    dire_pick    = paste(na.omit(dire_pick), collapse = ","),
-    dire_ban     = paste(na.omit(dire_ban), collapse = ","),
-    .groups = "drop"
-  ) %>%
-  select(match_id, leagueid, radiant_pick, radiant_ban, dire_pick, dire_ban)
+#df6_vars <- df6_ext1 %>%
+#  group_by(match_id, leagueid) %>%
+#  summarise(
+#    radiant_pick = paste(na.omit(radiant_pick), collapse = ","),
+#    radiant_ban  = paste(na.omit(radiant_ban), collapse = ","),
+#    dire_pick    = paste(na.omit(dire_pick), collapse = ","),
+#    dire_ban     = paste(na.omit(dire_ban), collapse = ","),
+#    .groups = "drop"
+#  ) %>%
+#  select(match_id, leagueid, radiant_pick, radiant_ban, dire_pick, dire_ban)
 
 # joining selected variables from df1,df2,df4 and df6
 df1246_vars <- inner_join(df124_vars, df6_vars, by = c("match_id","leagueid"))
