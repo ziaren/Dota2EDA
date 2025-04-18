@@ -226,3 +226,103 @@ df %>%
 
 
 ```
+
+
+```{r top-teams-count}
+
+df %>%
+  count(radiant_team_id, sort = TRUE) %>%
+  top_n(10) %>%
+  ggplot(aes(x = reorder(radiant_team_id, n), y = n)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Top 10 Radiant Teams by Match Count", x = "Team", y = "Matches")
+
+```
+
+
+```{r win-rate-by-team}
+
+df %>%
+  group_by(radiant_team_id) %>%
+  summarise(win_rate = mean(radiant_win == TRUE), n = n()) %>%
+  filter(n > 10) %>%  # filter to teams with enough matches
+  top_n(10, win_rate) %>%
+  ggplot(aes(x = reorder(radiant_team_id, win_rate), y = win_rate)) +
+  geom_col(fill = "darkgreen") +
+  coord_flip() +
+  labs(title = "Top Radiant Team Win Rates", x = "Team", y = "Win Rate")
+
+
+```
+
+
+```{r radiant-team-win-rate}
+# Radiant Team Win Rate (teams with more than 10 matches)
+df %>%
+  group_by(radiant_team_id) %>%
+  summarise(win_rate = mean(as.logical(radiant_win), na.rm = TRUE), matches = n()) %>%
+  filter(matches > 10) %>%
+  slice_max(win_rate, n = 10) %>%
+  ggplot(aes(x = reorder(radiant_team_id, win_rate), y = win_rate)) +
+  geom_col(fill = "darkgreen") +
+  coord_flip() +
+  labs(title = "Top Radiant Teams by Win Rate (min. 10 matches)", 
+       x = "Radiant Team", 
+       y = "Win Rate") +
+  theme_minimal()
+
+
+```
+
+
+```{r top-radiant-team-by-match}
+
+# Top 10 Radiant Teams by Match Count
+df %>%
+  count(radiant_team_id, sort = TRUE) %>%
+  slice_max(n, n = 10) %>%
+  ggplot(aes(x = reorder(radiant_team_id, n), y = n)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Top 10 Radiant Teams by Match Count", x = "Radiant Team", y = "Number of Matches") +
+  theme_minimal()
+
+
+```
+
+
+
+```{r top-dire-team-by-match}
+# Top 10 Dire Teams by Match Count
+df %>%
+  count(dire_team_id, sort = TRUE) %>%
+  slice_max(n, n = 10) %>%
+  ggplot(aes(x = reorder(dire_team_id, n), y = n)) +
+  geom_bar(stat = "identity", fill = "tomato") +
+  coord_flip() +
+  labs(title = "Top 10 Dire Teams by Match Count", x = "Dire Team", y = "Number of Matches") +
+  theme_minimal()
+
+
+```
+
+
+```{r dire-team-win-rate}
+# Dire Team Win Rate (teams with more than 10 matches)
+df %>%
+  group_by(dire_team_id) %>%
+  summarise(win_rate = mean(!as.logical(radiant_win), na.rm = TRUE), matches = n()) %>%
+  filter(matches > 10) %>%
+  slice_max(win_rate, n = 10) %>%
+  ggplot(aes(x = reorder(dire_team_id, win_rate), y = win_rate)) +
+  geom_col(fill = "purple") +
+  coord_flip() +
+  labs(title = "Top Dire Teams by Win Rate (min. 10 matches)", 
+       x = "Dire Team", 
+       y = "Win Rate") +
+  theme_minimal()
+
+
+
+```
