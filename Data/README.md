@@ -2,6 +2,23 @@
 
 This folder contains 2024 Dota 2 Pro League Matches data used for exploratory data analysis (EDA). 
 
+## EDA questions:
+1. What helps Radiant win.
+   - `main_metadata$radiant_team_id`: some teams are better than others.
+   - `main_metadata$radiant_score`: the common sense goes like, the more one kills, the more likely one wins.
+   - Half way performance: predict game results based on half way data. Half-way adventage to what extent guarentees success.
+     - `radiant_exp_adv$exp` when `minute == 15`: the half way performance in terms of the experience earned.
+     - `radiant_gold_adv$exp` when `minute == 15`: the half way performance in terms of the wealth earned.
+   - Collaboration: does high frequency or long period collaboration increase the likelihood of success.
+     - count teamfights per match
+     - cumulate teamfights length
+  ...
+2. What makes a game long. 
+   - A correlation between certain heroes and the game length?
+   - Number of teamfights vs game length?
+   - region
+  ... 
+
 ## Dota 2 intro:
 
 Dota 2 is a free-to-play multiplayer online battle arena (MOBA) game. In Dota 2, two teams of five players each control powerful characters called heroes, each with unique abilities. The main objective is to destroy the enemy’s Ancient, a structure located deep within their base, while defending your own. In Dota 2, the Radiant is one of the two opposing factions on the game map—the other being the Dire. Games are played on a large map divided into three lanes, with players battling each other and computer-controlled units to gain gold and experience. Strategy, teamwork, and quick decision-making are key to winning.
@@ -49,12 +66,7 @@ Please also download the following files from [Google Drive](https://drive.googl
 
 There are four very interesting values: Throw, Loss, Comeback, Stomp. I'm trying to understand how the values are fixed. Let me know if you find any source. So far what I noticed is that in the case of Radiant won, there will be values for Throw and Loss; in the case of Radiant Loss, there will be values for Comeback and Stomp.
   
-## EDA questions:
-- Of course, we want to know what makes Radiant win. `main_metadata$radiant_team_id` will definitely play a role, as some teams are better than others. `main_metadata$radiant_score` will be a  influential factor, as the common knowledge goes like, the more one kills, the more likely one wins.
-- We also want to know what makes a game long. For instance, is there a correlation between certain heroes and the game length? Maybe the more team fights the longer the game?
-- Is collaboration helpful? (Gamers view is that not necessarily but we will see what the data says). 
-- We also want to know what makes a game long. For instance, is there a correlation between certain heroes and the game length? Maybe the more team fights the longer the game?
-- Does halfway performance predict anything about the final result.  
+
 
 
 
