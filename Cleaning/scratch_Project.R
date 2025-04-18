@@ -207,6 +207,12 @@ df6_vars <- df6_v %>%
     Strength_picked_d     = sum(Strength_picked[team == 0]),
     Strength_banned_d     = sum(Strength_banned[team == 0]),
     
+    Agility_picked_r = sum(Agility_picked[team == 1]),
+    Agility_banned_r = sum(Agility_banned[team == 1]),
+    
+    Agility_picked_d = sum(Agility_picked[team == 0]),
+    Agility_banned_d = sum(Agility_banned[team == 0]),
+    
     Intelligence_picked_r = sum(Intelligence_picked[team == 1]),
     Intelligence_banned_r = sum(Intelligence_banned[team == 1]),
     
