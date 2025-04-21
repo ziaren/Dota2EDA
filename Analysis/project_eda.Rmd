@@ -18,7 +18,8 @@ library(ggplot2)
 library(plotly)
 library(leaps)
 ```
-#### EDA
+
+## EDA
 
 ```{r loading-data}
 df <- read.csv("C:/Users/Jerry Bodman/Desktop/Homework files/df_sample.csv")
@@ -167,19 +168,6 @@ ggplot(categorical_long, aes(x = Value)) +
 ```
 
 
-
-
-
-```{r corrplot, fig.width=10, fig.height=8}
-library(corrplot)
-
-cor_matrix <- cor(df[, numeric_vars], use = "complete.obs")
-corrplot(cor_matrix, method = "color", type = "full",tl.cex = 0.7)
-
-
-```
-
-
 ```{r check-class-imbalance}
 table(df$radiant_win)
 prop.table(table(df$radiant_win))
@@ -199,7 +187,7 @@ ggplot(df, aes(x = radiant_win)) +
 ```{r correlation-plot}
 library(GGally)
 
-ggpairs(df[, c("radiant_score", "dire_score", "teamfight_frequency", "Tteamfight_deaths")])
+#ggpairs(df[, c("radiant_score", "dire_score", "teamfight_frequency", "Tteamfight_deaths")])
 
 
 ```
@@ -240,21 +228,6 @@ df %>%
 
 ```
 
-
-```{r win-rate-by-team}
-
-df %>%
-  group_by(radiant_team_id) %>%
-  summarise(win_rate = mean(radiant_win == TRUE), n = n()) %>%
-  filter(n > 10) %>%  # filter to teams with enough matches
-  top_n(10, win_rate) %>%
-  ggplot(aes(x = reorder(radiant_team_id, win_rate), y = win_rate)) +
-  geom_col(fill = "darkgreen") +
-  coord_flip() +
-  labs(title = "Top Radiant Team Win Rates", x = "Team", y = "Win Rate")
-
-
-```
 
 
 ```{r radiant-team-win-rate}
@@ -326,3 +299,817 @@ df %>%
 
 
 ```
+
+```{r}
+
+new_df <- df %>%
+  mutate(radiant_win_bool = (ifelse(radiant_win=="True",1,0)))
+View(new_df)
+head(new_df)
+```
+
+
+```{r}
+pairs(new_df %>%
+  dplyr::select(duration, Strength_picked_r, Strength_banned_r, Strength_picked_d,
+                Strength_banned_d, Agility_picked_r, Agility_picked_d,
+                Agility_banned_r, Agility_banned_d, Universal_picked_r,
+                Universal_banned_r, Universal_picked_d, Universal_banned_d,
+                radiant_win_bool) %>%
+  dplyr::mutate(across(everything(), as.numeric)))
+
+```
+
+
+```{r}
+df_N<- new_df %>%
+  select(region,duration,first_blood_time,radiant_score,dire_score,exp_15min,teamfight_duration,teamfight_frequency,Tteamfight_deaths,radiant_win_bool)
+  
+df_N$region <- as.factor(df_N$region)
+pairs(df_N)
+```
+
+## PREDICTION
+
+```{r train-test-data}
+set.seed(42)
+pred_df<- df_N %>%
+  select(region,duration,first_blood_time,radiant_score,dire_score,exp_15min,teamfight_frequency)
+
+train_indices <- sample(1:NROW(df_N), size = 0.9 * NROW(df_N), replace = FALSE)
+
+train_data <- pred_df[train_indices, ]
+test_data <- pred_df[-train_indices, ]
+
+nrow(test_data)
+nrow(train_data)
+colnames(test_data)
+```
+
+
+
+```{r marginal-regressoin}
+model_region <- lm(duration ~ region, data = train_data)
+summary(model_region)
+
+model_first_blood_time <- lm(duration ~ first_blood_time, data = train_data)
+summary(model_first_blood_time)
+
+model_teamfight_frequency <- lm(duration ~ teamfight_frequency, data = train_data)
+summary(model_teamfight_frequency)
+
+model_exp_15min <- lm(duration ~ exp_15min, data = train_data)
+summary(model_exp_15min)
+
+model_rad_score <- lm(duration ~ radiant_score, data = train_data)
+summary(model_rad_score)
+
+model_dire_score <- lm(duration ~ dire_score, data = train_data)
+summary(model_dire_score)
+```
+
+
+```{r multiple-regressoin}
+
+model_full <- lm(duration ~ .  ,data = train_data)
+(smry_model <- summary(model_full))
+
+
+```
+
+
+```{r models}
+
+# Define the formulas for each model type
+
+# Linear model (no interactions, no polynomial terms)
+linear_formula <- duration ~ region + first_blood_time + radiant_score + dire_score + exp_15min + teamfight_frequency
+
+# Polynomial model (adding squared terms for predictors to allow for non-linear relationships)
+poly_formula <- duration ~ region + I(first_blood_time^2) + radiant_score + I(dire_score^2) + exp_15min + I(teamfight_frequency^2)
+
+poly2_formula <- duration ~ region + I(first_blood_time^2) + I(radiant_score^2) + I(dire_score^2) + exp_15min + I(teamfight_frequency^2)
+
+# Interaction model (adding interactions between all predictors)
+interaction_formula <- duration ~ region + first_blood_time + radiant_score + (dire_score + exp_15min + teamfight_frequency)^2
+
+interaction2_formula <- duration ~ region + first_blood_time + (radiant_score + dire_score + exp_15min + teamfight_frequency)^2
+
+
+
+```
+
+
+```{r simulation-function}
+
+run_model_sim <- function(data, formula) {
+  # Split into train/test sets
+  train_idx <-  sample(1:NROW(data), size = 0.9 * NROW(data), replace = FALSE)#createDataPartition(data$duration, p = 1 - test_size, list = FALSE)
+  train <- data[train_idx, ]
+  test  <- data[-train_idx, ]
+  
+  # Fit the model
+  train$region <- factor(train$region)
+  test$region <- factor(test$region, levels = levels(train$region))
+  model <- lm(formula, data = train)
+  
+  # Make predictions on both train and test sets
+  train_pred <- predict(model, newdata = train)
+  test_pred  <- predict(model, newdata = test)
+  
+  # Calculate MSE
+  train_mse <- mean((train$duration - train_pred)^2)
+  test_mse  <- mean((test$duration - test_pred)^2)
+  
+  # Return results
+  list(train_mse = train_mse, test_mse = test_mse,
+       pred_test = test_pred, y_test = test$duration)
+}
+
+
+```
+
+
+```{r simulation}
+# Set the random seed for reproducibility
+set.seed(100)
+
+# Number of simulations
+n_sim <- 100
+
+# Define model types
+model_types <- c("Linear", "Polynomial", "Polynomial2", "Interaction", "Interaction2")
+
+# Initialize results tibble with proper column names
+results <- tibble(Model = character(), 
+                  Sim = integer(), 
+                  TrainMSE = numeric(), 
+                  TestMSE = numeric())
+
+# Run simulations for each model
+for (model in model_types) {
+  # Choose the formula based on the model type
+  formula <- switch(model,
+    "Linear"      = linear_formula,
+    "Polynomial"  = poly_formula,
+    "Interaction" = interaction_formula,
+    "Polynomial2" = poly2_formula,
+    "Interaction2" = interaction2_formula
+  )
+  
+  # Run the simulations and store results
+  for (i in 1:n_sim) {
+    res <- run_model_sim(pred_df, formula)
+    
+    # Add row to the results tibble
+    results <- results %>%
+      add_row(
+        Model = model,
+        Sim = i,
+        TrainMSE = res$train_mse,
+        TestMSE = res$test_mse
+      )
+  }
+}
+
+# Optionally, print the results to inspect
+print(results)
+
+
+```
+
+
+
+```{r estimate-bias-variance}
+
+# Bias-Variance estimation per model
+bias_var_df <- results %>%
+  group_by(Model) %>%
+  summarise(
+    AvgTrainMSE = mean(TrainMSE, na.rm = TRUE),
+    AvgTestMSE  = mean(TestMSE , na.rm = TRUE),
+    Variance    = var(TestMSE, na.rm = TRUE),              # Approx. variance
+    BiasSq      = mean(TestMSE, na.rm = TRUE) - mean(TrainMSE, na.rm = TRUE)  # Approx. bias-sqr
+  )
+
+
+```
+
+
+```{r}
+
+summary(results)
+```
+
+```{r plot}
+
+# Reshape for plotting
+plot_df <- bias_var_df %>%
+  pivot_longer(cols = c(BiasSq, Variance, AvgTestMSE),
+               names_to = "Metric", values_to = "Value")
+
+ggplot(plot_df, aes(x = Model, y = Value, fill = Metric)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  theme_bw() +
+  labs(title = "Bias-Variance Tradeoff Across Model Flexibility",
+       y = "Error Component") +
+  scale_fill_manual(values = c("BiasSq" = "blue", "Variance" = "orange", "AvgTestMSE" = "red"))
+
+```
+
+
+```{r}
+model_complexity <- tibble(
+  Model = c("Linear", "Polynomial", "Polynomial2", "Interaction", "Interaction2"),
+  Complexity = c(1, 2, 3, 4, 5)
+)
+
+bias_var_df <- results %>%
+  drop_na(TrainMSE, TestMSE) %>%
+  group_by(Model) %>%
+  summarise(
+    AvgTrainMSE = mean(TrainMSE),
+    AvgTestMSE  = mean(TestMSE),
+    Variance    = var(TestMSE),
+    BiasSq      = mean(TestMSE) - mean(TrainMSE)
+  ) %>%
+  left_join(model_complexity, by = "Model")
+
+```
+
+
+
+```{r}
+# Reshape the data to long format for plotting
+plot_df_mse <- bias_var_df %>%
+  select(Complexity, AvgTrainMSE, AvgTestMSE) %>%
+  pivot_longer(
+    cols = c(AvgTrainMSE, AvgTestMSE),
+    names_to = "Set",
+    values_to = "RMSE"
+  )
+
+# Plot both Train and Test RMSE on the same plot
+ggplot(plot_df_mse, aes(x = Complexity, y = RMSE, color = Set)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  scale_x_continuous(
+    breaks = 1:5,
+    labels = c("Linear", "Poly", "Poly2", "Interact", "Interact2")
+  ) +
+  labs(
+    title = "Train vs Test RMSE by Model Complexity",
+    x = "Model Complexity",
+    y = "RMSE",
+    color = "Set"
+  ) +
+  theme_minimal()
+
+```
+
+
+```{r}
+
+# Define the formulas for each model type
+
+# Linear model (no interactions, no polynomial terms)
+linear_formula <- duration ~  first_blood_time + radiant_score + dire_score + exp_15min + teamfight_frequency
+
+# Polynomial model (adding squared terms for predictors to allow for non-linear relationships)
+poly_formula <- duration ~  I(first_blood_time^2) + radiant_score + I(dire_score^2) + exp_15min + I(teamfight_frequency^2)
+
+poly2_formula <- duration ~  I(first_blood_time^2) + I(radiant_score^2) + I(dire_score^2) + exp_15min + I(teamfight_frequency^2)
+
+# Interaction model (adding interactions between all predictors)
+interaction_formula <- duration ~  first_blood_time + radiant_score + (dire_score + exp_15min + teamfight_frequency)^2
+
+interaction2_formula <- duration ~ first_blood_time + (radiant_score + dire_score + exp_15min + teamfight_frequency)^2
+
+```
+
+
+```{r}
+
+run_model_sim <- function(df, formula) {
+
+  #n <- nrow(df)
+  train_idx <- sample(1:NROW(df), size = 0.9 * NROW(df), replace = FALSE)
+  train_data <- df[train_idx, ]
+  test_data  <- df[-train_idx, ]
+  
+  model <- lm(formula, data = train_data)
+  train_preds <- predict(model, newdata = train_data)
+  test_preds  <- predict(model, newdata = test_data)
+  
+  train_mse <- mean((train_data$duration - train_preds)^2)
+  test_mse  <- mean((test_data$duration - test_preds)^2)
+
+  train_rmse <- sqrt(train_mse)
+  test_rmse  <- sqrt(test_mse)
+
+  list(train_mse = train_mse, test_mse = test_mse,
+       train_rmse = train_rmse, test_rmse = test_rmse)
+}
+
+
+```
+
+
+```{r}
+
+# Set the random seed for reproducibility
+set.seed(100)
+
+# Number of simulations
+n_sim <- 100
+
+# Define model types
+model_types <- c("Linear", "Polynomial", "Polynomial2", "Interaction", "Interaction2")
+
+# Initialize results tibble with proper column names
+results <- tibble(Model = character(), 
+                  Sim = integer(), 
+                  TrainMSE = numeric(), 
+                  TestMSE = numeric())
+
+# Run simulations for each model
+for (model in model_types) {
+  # Choose the formula based on the model type
+  formula <- switch(model,
+    "Linear"      = linear_formula,
+    "Polynomial"  = poly_formula,
+    "Interaction" = interaction_formula,
+    "Polynomial2" = poly2_formula,
+    "Interaction2" = interaction2_formula
+  )
+  
+  # Run the simulations and store results
+  for (i in 1:n_sim) {
+    res <- run_model_sim(pred_df, formula)
+    
+    # Add row to the results tibble
+    results <- results %>%
+      add_row(
+        Model = model,
+        Sim = i,
+        TrainMSE = res$train_mse,
+        TestMSE = res$test_mse
+      )
+  }
+}
+
+# Optionally, print the results to inspect
+print(results)
+
+
+```
+
+```{r}
+
+summary(pred_df$duration)
+```
+
+
+```{r}
+summary(results)
+# Bias-Variance estimation per model
+bias_var_df <- results %>%
+  group_by(Model) %>%
+  summarise(
+    AvgTrainMSE = mean(TrainMSE, na.rm = TRUE),
+    AvgTestMSE  = mean(TestMSE , na.rm = TRUE),
+    Variance    = var(TestMSE, na.rm = TRUE),              # Approx. variance
+    BiasSq      = mean(TestMSE, na.rm = TRUE) - mean(TrainMSE, na.rm = TRUE)  # Approx. bias-sqr
+  )
+
+
+```
+
+
+```{r}
+
+model_complexity <- tibble(
+  Model = c("Linear", "Polynomial", "Polynomial2", "Interaction", "Interaction2"),
+  Complexity = c(1, 2, 3, 4, 5)
+)
+
+bias_var_df <- results %>%
+  drop_na(TrainMSE, TestMSE) %>%
+  group_by(Model) %>%
+  summarise(
+    AvgTrainMSE = mean(TrainMSE),
+    AvgTestMSE  = mean(TestMSE),
+    Variance    = var(TestMSE),
+    BiasSq      = mean(TestMSE) - mean(TrainMSE)
+  ) %>%
+  left_join(model_complexity, by = "Model")
+
+```
+
+
+
+```{r}
+
+plot_df <- bias_var_df %>%
+  pivot_longer(cols = c(BiasSq, Variance, AvgTestMSE),
+               names_to = "Metric", values_to = "Value")
+
+```
+
+```{r}
+
+# Filter to only BiasSq and Variance
+plot_df_bias_var <- plot_df %>%
+  filter(Metric %in% c("BiasSq", "Variance"))
+
+# Plot Bias² and Variance only
+ggplot(plot_df_bias_var, aes(x = Complexity, y = Value, color = Metric)) +
+  geom_line(size = 0.9) +
+  geom_point(size = 1.5) +
+  scale_x_continuous(
+    breaks = 1:5,
+    labels = c("Linear", "Poly", "Poly2", "Interact", "Interact2")
+  ) +
+  labs(
+    title = "Bias-Variance Tradeoff",
+    x = "Model Complexity",
+    y = "Value",
+    color = "Metric"
+  ) +
+  theme_minimal()
+
+```
+
+
+```{r}
+
+# Reshape the data to long format for plotting
+plot_df_mse <- bias_var_df %>%
+  select(Complexity, AvgTrainMSE, AvgTestMSE) %>%
+  pivot_longer(
+    cols = c(AvgTrainMSE, AvgTestMSE),
+    names_to = "Set",
+    values_to = "RMSE"
+  )
+
+# Plot both Train and Test RMSE on the same plot
+ggplot(plot_df_mse, aes(x = Complexity, y = RMSE, color = Set)) +
+  geom_line(size = 0.9) +
+  geom_point(size = 1.3) +
+  scale_x_continuous(
+    breaks = 1:5,
+    labels = c("Linear", "Poly", "Poly2", "Interact", "Interact2")
+  ) +
+  labs(
+    title = "Train vs Test RMSE by Model Complexity",
+    x = "Model Complexity",
+    y = "RMSE",
+    color = "Set"
+  ) +
+  theme_minimal()
+
+
+```
+
+
+## Classification
+In this section we ask the question: can we predict whether Radiant will win/loss based on the hero selection.
+
+```{r class-library}
+library(class)
+library(e1071)
+library(MASS)
+```
+
+### KNN
+```{r KNN}
+set.seed(45)
+
+df_N$radiant_win <- as.factor(df_N$radiant_win)
+predictor_vars <- c("duration", "first_blood_time", "radiant_score", "dire_score", "exp_15min", "teamfight_frequency","teamfight_duration")
+df_N_knn <- df_N[, c(predictor_vars, "radiant_win")]
+df_N_knn[predictor_vars] <- lapply(df_N_knn[predictor_vars], function(x) as.numeric(as.character(x)))
+
+train_idx <- sample(1:nrow(df_N_knn), size = 0.9 * nrow(df_N_knn))
+
+train_X <- scale(df_N_knn[train_idx, predictor_vars])  
+test_X  <- scale(df_N_knn[-train_idx, predictor_vars],
+                 center = attr(train_X, "scaled:center"),
+                 scale  = attr(train_X, "scaled:scale"))
+
+train_y <- df_N_knn[train_idx, "radiant_win"]
+test_y  <- df_N_knn[-train_idx, "radiant_win"]
+
+pred_y <- knn(train = train_X, test = test_X, cl = train_y, k = 100)
+
+test_error <- mean(pred_y != test_y)
+print(paste("Test Error:", round(test_error, 4)))
+
+```
+
+
+
+###LOGISTIC
+
+```{r}
+set.seed(43)
+log_df <- df_N[, !names(df_N) %in% c("region","radiant_win_bool","Tteamfight_deaths")]
+train_indices <- sample(1:NROW(log_df), size = 0.9 * NROW(log_df), replace = FALSE)
+
+train_data <- log_df[train_indices, ]
+test_data <- log_df[-train_indices, ]
+colnames(log_df)
+```
+
+```{r Logistic-regression}
+
+
+model1 <- glm(
+  radiant_win ~ duration + first_blood_time + dire_score + radiant_score +
+    exp_15min + teamfight_duration + teamfight_frequency,
+  data = train_data,
+  family = binomial(link = "logit")
+)
+summary(model1)
+
+model2 <- glm(
+  radiant_win ~ 
+    poly(first_blood_time, 2) +                  
+    poly(dire_score, 2) +    
+    log(duration) +
+    log(abs(radiant_score) + 0.1) +                    
+    sqrt(abs(exp_15min)) +                            
+    teamfight_duration + teamfight_frequency,            
+  data = train_data,
+  family = binomial
+)
+
+summary(model2)
+
+model3 <- glm(
+  radiant_win ~ duration + first_blood_time + dire_score + radiant_score +
+    exp_15min + teamfight_duration + first_blood_time*exp_15min + dire_score*radiant_score + teamfight_frequency,
+  data = train_data,
+  family = binomial(link = "logit")
+)
+summary(model3)
+
+AIC(model1, model2)
+
+```
+
+```{r}
+
+# Model 1 Predictions
+pred1_probs <- predict(model1, newdata = test_data, type = "response")
+pred1_class <- ifelse(pred1_probs > 0.5, 1, 0)
+
+# Model 2 Predictions
+pred2_probs <- predict(model2, newdata = test_data, type = "response")
+pred2_class <- ifelse(pred2_probs > 0.5, 1, 0)
+
+# Model 3 Predictions
+pred3_probs <- predict(model3, newdata = test_data, type = "response")
+pred3_class <- ifelse(pred3_probs > 0.5, 1, 0)
+
+
+```
+
+
+```{r}
+
+# Convert factors for comparison
+actual <- as.numeric(as.character(test_data$radiant_win))
+
+# Accuracy for each model
+test_error1 <- mean(pred1_class != actual)
+test_error2 <- mean(pred2_class != actual)
+test_error3 <- mean(pred3_class != actual)
+
+# Print the results
+cat("Test Error:\n")
+cat("Model 1:", round(test_error1, 4), "\n")
+cat("Model 2:", round(test_error2, 4), "\n")
+cat("Model 3:", round(test_error3, 4), "\n")
+
+```
+
+
+### LDA , QDA
+```{r}
+x <- train_data[, !(names(train_data) %in% "radiant_win")] 
+y <- train_data$radiant_win
+lda_model <- lda(x = x, grouping = y)
+lda_model
+
+```
+
+```{r}
+
+x_test <- test_data[, !(names(test_data) %in% "radiant_win")]
+lda_predictions <- predict(lda_model, newdata = x_test)
+predicted_classes <- lda_predictions$class
+actual_classes <- test_data$radiant_win
+
+
+# Calculate the test_error (proportion of correct predictions)
+test_error <- mean(predicted_classes != actual_classes)
+
+# Print the test_error
+print(paste("Test Error: ", round(test_error, 4)))
+
+
+```
+
+
+```{r}
+
+qda_model <- qda(x = x, grouping = y)
+qda_model
+
+```
+
+
+```{r}
+
+
+qda_predictions <- predict(qda_model, newdata = x_test)
+qda_predicted_classes <- qda_predictions$class
+
+
+
+# Calculate the test_error (proportion of correct predictions)
+test_error <- mean(qda_predicted_classes != actual_classes)
+
+# Print the test_error
+print(paste("Test Error: ", round(test_error, 4)))
+
+
+```
+
+
+
+
+### NAIVE BAYES
+```{r}
+
+
+# Train Naive Bayes model
+nb_model <- naiveBayes(radiant_win ~ ., data = train_data)
+
+# Predict classes and probabilities on test data
+pred_class <- predict(nb_model, newdata = test_data)
+pred_prob  <- predict(nb_model, newdata = test_data, type = "raw")
+
+# Confusion matrix
+conf_mat <- table(Predicted = pred_class, Actual = test_data$radiant_win)
+print(conf_mat)
+
+# test_error
+test_error <- mean(pred_class != test_data$radiant_win)
+print(paste("Test Error:", round(test_error, 4)))
+
+```
+
+
+
+### chapter 6
+
+
+```{r}
+library(leaps)
+library(glmnet)
+library(tidyverse)
+```
+
+```{r}
+df <- read.csv("C:/Users/Jerry Bodman/Desktop/Homework files/df_sample.csv")
+colnames(df)
+```
+
+```{r}
+df <- df[, !names(df) %in% c("match_id", "leagueid", "radiant_team_id", "dire_team_id", "region")]
+#df <- df %>% select(-c("match_id", "leagueid", "radiant_team_id", "dire_team_id", "region"))
+colnames(df)
+```
+
+
+```{r}
+set.seed(01002)
+train_idx <- sample(1:nrow(df), size = 0.9 * nrow(df))
+train_df <- df[train_idx, ]
+test_df <- df[-train_idx, ]
+```
+
+
+BEST SUBSET SELECTION (w match_id)
+
+```{r}
+subset_fit <- regsubsets(duration ~ ., data = train_df, nvmax = 10)
+subset_summary <- summary(subset_fit)
+
+test_mat <- model.matrix(duration ~ ., data = test_df)
+
+val_errors <- rep(NA, 10)
+for (i in 1:10) {
+  coef_i <- coef(subset_fit, id = i)
+  pred <- test_mat[, names(coef_i)] %*% coef_i
+  val_errors[i] <- mean((test_df$duration - pred)^2)
+}
+
+plot(val_errors, type = "b", xlab = "Number of Predictors", ylab = "Test MSE",
+     main = "Best Subset Selection: Test MSE")
+```
+
+```{r}
+coef_5 <- coef(subset_fit, id = 6)
+names(coef_5)[-1]
+```
+
+
+
+Shrinkage (RIDGE/LASSO)
+
+```{r}
+# here i continue to remove match_id as it likely is non-informative to duration
+X_train <- model.matrix(duration ~ . -1, data = train_df)
+y_train <- train_df$duration
+X_test  <- model.matrix(duration ~ . -1, data = test_df)
+y_test <- test_df$duration
+
+
+cv_lasso <- cv.glmnet(X_train, y_train, alpha = 1)
+lasso_pred <- predict(cv_lasso, newx = X_test, s = "lambda.min")
+lasso_mse <- mean((y_test - lasso_pred)^2)
+lasso_mse
+```
+
+```{r}
+lasso_coef <- coef(cv_lasso, s = "lambda.min")
+lasso_predictors <- rownames(lasso_coef)[lasso_coef[, 1] != 0]
+lasso_predictors <- setdiff(lasso_predictors, "(Intercept)")
+lasso_predictors
+```
+
+The Lasso model kept 24 predictors at optimal lambda. Because of how many predictors were retained this suggests that game duration is influenced by many factors, although some minimally so. 
+
+PCA
+
+```{r}
+# get only numeric and remove duration
+num_cols <- sapply(df, is.numeric)
+df_num <- df[, num_cols]
+df_num$duration <- NULL  
+
+# remove cols with variance = 0 
+X_train_raw <- train_df[, colnames(df_num)]
+nzv_cols <- apply(X_train_raw, 2, var) > 0
+X_train <- scale(X_train_raw[, nzv_cols])
+
+# scale predictors for pca
+X_test_raw <- test_df[, colnames(X_train_raw[, nzv_cols])]
+X_test <- scale(X_test_raw,
+                center = attr(X_train, "scaled:center"),
+                scale = attr(X_train, "scaled:scale"))
+
+pca_train <- prcomp(X_train)
+
+plot(pca_train, type = "l", main = "Plot of Principal Components")
+summary(pca_train)
+
+```
+It appears that PC's 1 and 2 explain the majority of the variance in the data. 
+
+
+```{r}
+# train w top 5 PCs
+train_pca_df <- as.data.frame(pca_train$x[, 1:5])
+train_pca_df$duration <- train_df$duration
+
+pca_model <- lm(duration ~ ., data = train_pca_df)
+summary(pca_model)
+```
+
+
+```{r}
+test_pcs <- predict(pca_train, newdata = X_test)[, 1:5]
+test_pca_df <- as.data.frame(test_pcs)
+
+pca_pred <- predict(pca_model, newdata = test_pca_df)
+test_mse_pca <- mean((test_df$duration - pca_pred)^2)
+test_mse_pca
+```
+
+```{r}
+pca_loadings <- pca_train$rotation[, 1:5]
+top_contributors <- apply(pca_loadings, 2, function(pc) {
+  names(sort(abs(pc), decreasing = TRUE)[1:5])
+})
+top_contributors
+
+```
+PC1: Comprised of variables that represent match intensity/team performance
+PC2: comprised of team composition variables (through hero bans)
+PC3: comprised of match metadata (match_id, league_id) as well as team hero picks (radiant)
+PC4: comprised of a combination of resources/score/team composition (dire)
+PC5: comprised of universal picks and hero qualities
