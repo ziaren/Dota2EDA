@@ -9,6 +9,14 @@ output: html_document
 
 ```{r setup, include=FALSE}
 df <- read.csv("630finaldata.csv")
+df$Strength_picked_r[df$Strength_picked_r %in% 1:5] <- 1
+df$Strength_picked_d[df$Strength_picked_d %in% 1:5] <- 1
+df$Agility_picked_r[df$Agility_picked_r %in% 1:5] <- 1
+df$Agility_picked_d[df$Agility_picked_d %in% 1:5] <- 1
+df$Intelligence_picked_r[df$Intelligence_picked_r %in% 1:5] <- 1
+df$Intelligence_picked_d[df$Intelligence_picked_d %in% 1:5] <- 1
+df$Universal_picked_r[df$Universal_picked_r %in% 1:5] <- 1
+df$Universal_picked_d[df$Universal_picked_d %in% 1:5] <- 1
 ```
 
 # Duration ~ Region
@@ -172,142 +180,150 @@ abline(model_team_frequency, lwd = 2, col = "firebrick")
 plot(model_team_frequency)
 ```
 
-# Duration ~ Number of Strength heroes picked by Radiant
+# Duration ~ Strength heroes picked by Radiant
 
 ```{r}
+df$Strength_picked_r <- factor(df$Strength_picked_r)
 model_strr <- lm(duration ~ Strength_picked_r, data = df)
 summary(model_strr)
 
 # scatterplot
 plot(df$Strength_picked_r, df$duration,
      pch = 16, col = "steelblue",
-     xlab = "Number of Strength heroes picked by Radiant",
+     xlab = "Strength heroes picked by Radiant",
      ylab = "Duration",
-     main = "Duration ~ Number of Strength heroes picked by Radiant")
+     main = "Duration ~ Strength heroes picked by Radiant")
 abline(model_strr, lwd = 2, col = "firebrick")
 
 # residual plot
 plot(model_strr)
 ```
 
-# Duration ~ Number of Strength heroes picked by Dire
+# Duration ~ Strength heroes picked by Dire
 
 ```{r}
+df$Strength_picked_d <- factor(df$Strength_picked_d)
 model_strd <- lm(duration ~ Strength_picked_d, data = df)
 summary(model_strd)
 
 # scatterplot
 plot(df$Strength_picked_d, df$duration,
      pch = 16, col = "steelblue",
-     xlab = "Number of Strength heroes picked by Dire",
+     xlab = "Strength heroes picked by Dire",
      ylab = "Duration",
-     main = "Duration ~ Number of Strength heroes picked by Dire")
+     main = "Duration ~ Strength heroes picked by Dire")
 abline(model_strd, lwd = 2, col = "firebrick")
 
 # residual plot
 plot(model_strd)
 ```
 
-# Duration ~ Number of Intelligence heroes picked by Radiant
+# Duration ~ Intelligence heroes picked by Radiant
 
-There is a negative slop. Every additional intelligence hero selected shortens the total game length by 34.5s on average. 
+Involving intelligence heroes shortens the total game length. 
 
 ```{r}
+df$Intelligence_picked_r <- factor(df$Intelligence_picked_r)
 model_intr <- lm(duration ~ Intelligence_picked_r, data = df)
 summary(model_intr)
 
 # scatterplot
 plot(df$Intelligence_picked_r, df$duration,
      pch = 16, col = "steelblue",
-     xlab = "Number of Intelligence heroes picked by Radiant",
+     xlab = "Intelligence heroes picked by Radiant",
      ylab = "Duration",
-     main = "Duration ~ Number of Intelligence heroes picked by Radiant")
+     main = "Duration ~ Intelligence heroes picked by Radiant")
 abline(model_intr, lwd = 2, col = "firebrick")
 
 # residual plot
 plot(model_intr)
 ```
 
-# Duration ~ Number of Intelligence heroes picked by Dire
+# Duration ~ Intelligence heroes picked by Dire
 
-There is a negative slop. Every additional intelligence hero selected shortens the total game length by 35.9s on average. 
+Selecting Intelligence hero shortens the total game length. 
 
 ```{r}
+df$Intelligence_picked_d <- factor(df$Intelligence_picked_d)
 model_intd <- lm(duration ~ Intelligence_picked_d, data = df)
 summary(model_intd)
 
 # scatterplot
 plot(df$Intelligence_picked_d, df$duration,
      pch = 16, col = "steelblue",
-     xlab = "Number of Intelligence heroes picked by Dire",
+     xlab = "Intelligence heroes picked by Dire",
      ylab = "Duration",
-     main = "Duration ~ Number of Intelligence heroes picked by Dire")
+     main = "Duration ~ Intelligence heroes picked by Dire")
 abline(model_intd, lwd = 2, col = "firebrick")
 
 # residual plot
 plot(model_intd)
 ```
-# Duration ~ Number of Agility heroes picked by Radiant
+# Duration ~ Agility heroes picked by Radiant
 
 ```{r}
+df$Agility_picked_r <- factor(df$Agility_picked_r)
 model_agir <- lm(duration ~ Agility_picked_r, data = df)
 summary(model_agir)
 
 # scatterplot
 plot(df$Agility_picked_r, df$duration,
      pch = 16, col = "steelblue",
-     xlab = "Number of Agility heroes picked by Radiant",
+     xlab = "Agility heroes picked by Radiant",
      ylab = "Duration",
-     main = "Duration ~ Number of Agility heroes picked by Radiant")
+     main = "Duration ~ Agility heroes picked by Radiant")
 abline(model_agir, lwd = 2, col = "firebrick")
 
 # residual plot
 plot(model_agir)
 ```
 
-# Duration ~ Number of Agility heroes picked by Dire
+# Duration ~ Agility heroes picked by Dire
 
 ```{r}
+df$Agility_picked_d <- factor(df$Agility_picked_d)
 model_agid <- lm(duration ~ Agility_picked_d, data = df)
 summary(model_agid)
 
 # scatterplot
 plot(df$Agility_picked_d, df$duration,
      pch = 16, col = "steelblue",
-     xlab = "Number of Agility heroes picked by Dire",
+     xlab = "Agility heroes picked by Dire",
      ylab = "Duration",
-     main = "Duration ~ Number of Agility heroes picked by Dire")
+     main = "Duration ~ Agility heroes picked by Dire")
 abline(model_agid, lwd = 2, col = "firebrick")
 
 # residual plot
 plot(model_agid)
 ```
 
-# Duration ~ Number of Universal heroes picked by Radiant
+# Duration ~ Universal heroes picked by Radiant
 
-There is a positive slope. Every additional intelligence hero selected increases the total game length by 35s on average. 
+Selecting intelligence hero increases the total game length. 
 
 ```{r}
+df$Universal_picked_r <- factor(df$Universal_picked_r)
 model_unir <- lm(duration ~ Universal_picked_r, data = df)
 summary(model_unir)
 
 # scatterplot
 plot(df$Universal_picked_r, df$duration,
      pch = 16, col = "steelblue",
-     xlab = "Number of Universal heroes picked by Radiant",
+     xlab = "Universal heroes picked by Radiant",
      ylab = "Duration",
-     main = "Duration ~ Number of Universal heroes picked by Radiant")
+     main = "Duration ~ Universal heroes picked by Radiant")
 abline(model_unir, lwd = 2, col = "firebrick")
 
 # residual plot
 plot(model_unir)
 ```
 
-# Duration ~ Number of Universal heroes picked by Dire
+# Duration ~ Universal heroes picked by Dire
 
-There is a positive slope. Every additional intelligence hero selected increases the total game length by 37.5s on average. 
+Selecting intelligence hero increases the total game length. 
 
 ```{r}
+df$Universal_picked_d <- factor(df$Universal_picked_d)
 model_unid <- lm(duration ~ Universal_picked_d, data = df)
 summary(model_unid)
 
