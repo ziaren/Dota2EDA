@@ -1,0 +1,104 @@
+---
+title: "Multiple Linear Regression"
+author: "Jia Ren"
+date: "2025-05-09"
+output: html_document
+---
+
+# Load data
+
+```{r setup, include=FALSE}
+df <- read.csv("630finaldata.csv")
+df$Strength_picked_r[df$Strength_picked_r %in% 1:5] <- 1
+df$Strength_picked_d[df$Strength_picked_d %in% 1:5] <- 1
+df$Agility_picked_r[df$Agility_picked_r %in% 1:5] <- 1
+df$Agility_picked_d[df$Agility_picked_d %in% 1:5] <- 1
+df$Intelligence_picked_r[df$Intelligence_picked_r %in% 1:5] <- 1
+df$Intelligence_picked_d[df$Intelligence_picked_d %in% 1:5] <- 1
+df$Universal_picked_r[df$Universal_picked_r %in% 1:5] <- 1
+df$Universal_picked_d[df$Universal_picked_d %in% 1:5] <- 1
+```
+
+# Multiple linear regression
+
+## Simple model
+
+  - Location matters: several regions differ by several minutes in average duration.
+	- Hero composition effects: picking Strength or Universal heroes tends to lengthen games (by 30–60s), while Agility picks shorten them.
+	- Game dynamics: higher scores substantially extend games (~25–30s per score point).
+	- Teamfights: more frequent fights add time.
+	- Moderate explanatory power: Adjusted R-squared 0.3023 
+
+```{r}
+df$region <- factor(df$region)
+df$Strength_picked_r <- factor(df$Strength_picked_r)
+df$Strength_picked_d <- factor(df$Strength_picked_d)
+df$Agility_picked_r <- factor(df$Agility_picked_r)
+df$Agility_picked_d <- factor(df$Agility_picked_d)
+df$Intelligence_picked_r <- factor(df$Intelligence_picked_r)
+df$Intelligence_picked_d <- factor(df$Intelligence_picked_d)
+df$Universal_picked_r <- factor(df$Universal_picked_r)
+df$Universal_picked_d <- factor(df$Universal_picked_d)
+
+model <- lm(
+  duration ~ region
+           + Strength_picked_r + Strength_picked_d
+           + Agility_picked_r  + Agility_picked_d
+           + Intelligence_picked_r + Intelligence_picked_d
+           + Universal_picked_r    + Universal_picked_d
+           + first_blood_time
+           + dire_score + radiant_score
+           + exp_15min
+           + teamfight_duration
+           + Tteamfight_deaths
+           + teamfight_frequency,
+  data = df
+)
+
+summary(model)
+
+par(mfrow = c(2,2))
+plot(model)
+```
+
+## Improved models
+
+  - exp_15min shows U shape (See Marginal Linear Regression file): use polynomial terms
+    poly(exp_15min, 2)2  becomes strongly negative. The match duration peaks at some mid‑range of exp_15min and then declines at the extremes.
+  - Add interaction terms `dire_score*radiant_score`: Dire score and radiant score are in competing relation
+  - Add interaction terms `teamfight_duration*teamfight_frequency`: More frequent team fights may add to the total duration of team fights.
+  - The model provides better fit: higher Adjusted R-squared (0.3722), lower RSE. 
+  
+  
+```{r}
+df$region <- factor(df$region)
+df$Strength_picked_r <- factor(df$Strength_picked_r)
+df$Strength_picked_d <- factor(df$Strength_picked_d)
+df$Agility_picked_r <- factor(df$Agility_picked_r)
+df$Agility_picked_d <- factor(df$Agility_picked_d)
+df$Intelligence_picked_r <- factor(df$Intelligence_picked_r)
+df$Intelligence_picked_d <- factor(df$Intelligence_picked_d)
+df$Universal_picked_r <- factor(df$Universal_picked_r)
+df$Universal_picked_d <- factor(df$Universal_picked_d)
+
+model_2 <- lm(
+  duration ~ region
+           + Strength_picked_r + Strength_picked_d
+           + Agility_picked_r  + Agility_picked_d
+           + Intelligence_picked_r + Intelligence_picked_d
+           + Universal_picked_r    + Universal_picked_d
+           + first_blood_time
+           + dire_score + radiant_score + dire_score * radiant_score
+           + poly(exp_15min, 2)
+           + teamfight_duration
+           + Tteamfight_deaths
+           + teamfight_frequency + teamfight_duration * teamfight_frequency,
+  data = df
+)
+
+summary(model_2)
+
+par(mfrow = c(2,2))
+plot(model_2)
+```
+  
