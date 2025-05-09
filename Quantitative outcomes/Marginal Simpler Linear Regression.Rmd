@@ -285,7 +285,7 @@ plot(model_agid)
 
 # Duration ~ Number of Universal heroes picked by Radiant
 
-There is a positive slop. Every additional intelligence hero selected increases the total game length by 35s on average. 
+There is a positive slope. Every additional intelligence hero selected increases the total game length by 35s on average. 
 
 ```{r}
 model_unir <- lm(duration ~ Universal_picked_r, data = df)
@@ -305,7 +305,7 @@ plot(model_unir)
 
 # Duration ~ Number of Universal heroes picked by Dire
 
-There is a positive slop. Every additional intelligence hero selected increases the total game length by 37.5s on average. 
+There is a positive slope. Every additional intelligence hero selected increases the total game length by 37.5s on average. 
 
 ```{r}
 model_unid <- lm(duration ~ Universal_picked_d, data = df)
