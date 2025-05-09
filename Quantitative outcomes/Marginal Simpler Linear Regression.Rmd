@@ -1,0 +1,324 @@
+---
+title: "Marginal Simple Linear Regressions"
+author: "Jia Ren"
+date: "2025-05-09"
+output: html_document
+---
+
+# Load data
+
+```{r setup, include=FALSE}
+df <- read.csv("630finaldata.csv")
+```
+
+# Duration ~ Region
+
+Game duration is highly significantly longer in at region 9 and 20, highly significantly shorter at region 3, 5. Game duration is  significantly longer at region 10, 38, significantly shorter at region 8, 18.
+
+```{r}
+df$region <- factor(df$region)
+model_region <- lm(duration ~ region, data = df)
+summary(model_region)
+
+# scatterplot
+plot(df$region, df$duration,
+     pch = 16, col = "steelblue",
+     xlab = "Region",
+     ylab = "Duration",
+     main = "Duration ~ Region")
+#abline(model_region, lwd = 2, col = "firebrick")
+
+# residual plot
+plot(model_region)
+```
+
+# Duration ~ First blood time
+
+For each additional 1s delay in first blood, the game’s total duration is predicted to be 0.114 s shorter on average. Statistically, there’s a tiny negative slope, later first blood is associated with marginally shorter games. Practically, that relationship is negligible. First blood time accounts for virtually none of the variability in game duration.
+
+```{r}
+model_first_blood <- lm(duration ~ first_blood_time, data = df)
+summary(model_first_blood)
+
+# scatterplot
+plot(df$first_blood_time, df$duration,
+     pch = 16, col = "steelblue",
+     xlab = "First Blood Time",
+     ylab = "Duration",
+     main = "Duration ~ First Blood Time")
+abline(model_first_blood, lwd = 2, col = "firebrick")
+
+# residual plot
+plot(model_first_blood)
+```
+
+# Duration ~ Dire score
+
+There is a positive slope. For each one unit increase in dire score, the game duration increases by 14.4s on average. 
+
+```{r}
+model_dire_score <- lm(duration ~ dire_score, data = df)
+summary(model_dire_score)
+
+# scatterplot
+plot(df$dire_score, df$duration,
+     pch = 16, col = "steelblue",
+     xlab = "Dire Score",
+     ylab = "Duration",
+     main = "Duration ~ Dire Score")
+abline(model_dire_score, lwd = 2, col = "firebrick")
+
+# residual plot
+plot(model_dire_score)
+```
+
+# Duration ~ Radiant score
+
+There is a positive slope. For each one unit increase in radiant score, the game duration increases by 12.6s on average. 
+
+```{r}
+model_radiant_score <- lm(duration ~ radiant_score, data = df)
+summary(model_radiant_score)
+
+# scatterplot
+plot(df$radiant_score, df$duration,
+     pch = 16, col = "steelblue",
+     xlab = "Radiant Score",
+     ylab = "Duration",
+     main = "Duration ~ Radiant Score")
+abline(model_radiant_score, lwd = 2, col = "firebrick")
+
+# residual plot
+plot(model_radiant_score)
+```
+
+# Duration ~ Experience gained at 15 mins
+
+The scatterplot looks obviously polynomial/normal, simple linear regression is not a good way to model the data. 
+
+```{r}
+model_exp_15min <- lm(duration ~ exp_15min, data = df)
+summary(model_exp_15min)
+
+# scatterplot
+plot(df$exp_15min, df$duration,
+     pch = 16, col = "steelblue",
+     xlab = "Experience gained at 15 mins",
+     ylab = "Duration",
+     main = "Duration ~ Experience gained at 15 mins")
+abline(model_exp_15min, lwd = 2, col = "firebrick")
+
+# residual plot
+plot(model_exp_15min)
+```
+
+# Duration ~ Team fight duration
+
+There is a positive correlation between team fight duration and total duration. 
+
+```{r}
+model_team_duration <- lm(duration ~ teamfight_duration, data = df)
+summary(model_team_duration)
+
+# scatterplot
+plot(df$teamfight_duration, df$duration,
+     pch = 16, col = "steelblue",
+     xlab = "Team fight duration",
+     ylab = "Duration",
+     main = "Duration ~ Team fight duration")
+abline(model_team_duration, lwd = 2, col = "firebrick")
+
+# residual plot
+plot(model_team_duration)
+```
+
+# Duration ~ Team fight deaths
+
+There is a positive slope. For one additional team fight death, the total duration increases by 11s. 
+
+```{r}
+model_team_death <- lm(duration ~ Tteamfight_deaths, data = df)
+summary(model_team_death)
+
+# scatterplot
+plot(df$Tteamfight_deaths, df$duration,
+     pch = 16, col = "steelblue",
+     xlab = "Team fight deaths",
+     ylab = "Duration",
+     main = "Duration ~ Team fight deaths")
+abline(model_team_death, lwd = 2, col = "firebrick")
+
+# residual plot
+plot(model_team_death)
+```
+
+# Duration ~ Team frequency
+
+There is a positive slope. For one additional team fight, the total duration increases by 49.6s. 
+
+```{r}
+model_team_frequency <- lm(duration ~ teamfight_frequency, data = df)
+summary(model_team_frequency)
+
+# scatterplot
+plot(df$teamfight_frequency, df$duration,
+     pch = 16, col = "steelblue",
+     xlab = "Team fight frequency",
+     ylab = "Duration",
+     main = "Duration ~ Team fight frequency")
+abline(model_team_frequency, lwd = 2, col = "firebrick")
+
+# residual plot
+plot(model_team_frequency)
+```
+
+# Duration ~ Number of Strength heroes picked by Radiant
+
+```{r}
+model_strr <- lm(duration ~ Strength_picked_r, data = df)
+summary(model_strr)
+
+# scatterplot
+plot(df$Strength_picked_r, df$duration,
+     pch = 16, col = "steelblue",
+     xlab = "Number of Strength heroes picked by Radiant",
+     ylab = "Duration",
+     main = "Duration ~ Number of Strength heroes picked by Radiant")
+abline(model_strr, lwd = 2, col = "firebrick")
+
+# residual plot
+plot(model_strr)
+```
+
+# Duration ~ Number of Strength heroes picked by Dire
+
+```{r}
+model_strd <- lm(duration ~ Strength_picked_d, data = df)
+summary(model_strd)
+
+# scatterplot
+plot(df$Strength_picked_d, df$duration,
+     pch = 16, col = "steelblue",
+     xlab = "Number of Strength heroes picked by Dire",
+     ylab = "Duration",
+     main = "Duration ~ Number of Strength heroes picked by Dire")
+abline(model_strd, lwd = 2, col = "firebrick")
+
+# residual plot
+plot(model_strd)
+```
+
+# Duration ~ Number of Intelligence heroes picked by Radiant
+
+There is a negative slop. Every additional intelligence hero selected shortens the total game length by 34.5s on average. 
+
+```{r}
+model_intr <- lm(duration ~ Intelligence_picked_r, data = df)
+summary(model_intr)
+
+# scatterplot
+plot(df$Intelligence_picked_r, df$duration,
+     pch = 16, col = "steelblue",
+     xlab = "Number of Intelligence heroes picked by Radiant",
+     ylab = "Duration",
+     main = "Duration ~ Number of Intelligence heroes picked by Radiant")
+abline(model_intr, lwd = 2, col = "firebrick")
+
+# residual plot
+plot(model_intr)
+```
+
+# Duration ~ Number of Intelligence heroes picked by Dire
+
+There is a negative slop. Every additional intelligence hero selected shortens the total game length by 35.9s on average. 
+
+```{r}
+model_intd <- lm(duration ~ Intelligence_picked_d, data = df)
+summary(model_intd)
+
+# scatterplot
+plot(df$Intelligence_picked_d, df$duration,
+     pch = 16, col = "steelblue",
+     xlab = "Number of Intelligence heroes picked by Dire",
+     ylab = "Duration",
+     main = "Duration ~ Number of Intelligence heroes picked by Dire")
+abline(model_intd, lwd = 2, col = "firebrick")
+
+# residual plot
+plot(model_intd)
+```
+# Duration ~ Number of Agility heroes picked by Radiant
+
+```{r}
+model_agir <- lm(duration ~ Agility_picked_r, data = df)
+summary(model_agir)
+
+# scatterplot
+plot(df$Agility_picked_r, df$duration,
+     pch = 16, col = "steelblue",
+     xlab = "Number of Agility heroes picked by Radiant",
+     ylab = "Duration",
+     main = "Duration ~ Number of Agility heroes picked by Radiant")
+abline(model_agir, lwd = 2, col = "firebrick")
+
+# residual plot
+plot(model_agir)
+```
+
+# Duration ~ Number of Agility heroes picked by Dire
+
+```{r}
+model_agid <- lm(duration ~ Agility_picked_d, data = df)
+summary(model_agid)
+
+# scatterplot
+plot(df$Agility_picked_d, df$duration,
+     pch = 16, col = "steelblue",
+     xlab = "Number of Agility heroes picked by Dire",
+     ylab = "Duration",
+     main = "Duration ~ Number of Agility heroes picked by Dire")
+abline(model_agid, lwd = 2, col = "firebrick")
+
+# residual plot
+plot(model_agid)
+```
+
+# Duration ~ Number of Universal heroes picked by Radiant
+
+There is a positive slop. Every additional intelligence hero selected increases the total game length by 35s on average. 
+
+```{r}
+model_unir <- lm(duration ~ Universal_picked_r, data = df)
+summary(model_unir)
+
+# scatterplot
+plot(df$Universal_picked_r, df$duration,
+     pch = 16, col = "steelblue",
+     xlab = "Number of Universal heroes picked by Radiant",
+     ylab = "Duration",
+     main = "Duration ~ Number of Universal heroes picked by Radiant")
+abline(model_unir, lwd = 2, col = "firebrick")
+
+# residual plot
+plot(model_unir)
+```
+
+# Duration ~ Number of Universal heroes picked by Dire
+
+There is a positive slop. Every additional intelligence hero selected increases the total game length by 37.5s on average. 
+
+```{r}
+model_unid <- lm(duration ~ Universal_picked_d, data = df)
+summary(model_unid)
+
+# scatterplot
+plot(df$Universal_picked_d, df$duration,
+     pch = 16, col = "steelblue",
+     xlab = "Number of Universal heroes picked by Dire",
+     ylab = "Duration",
+     main = "Duration ~ Number of Universal heroes picked by Dire")
+abline(model_unid, lwd = 2, col = "firebrick")
+
+# residual plot
+plot(model_unid)
+```
