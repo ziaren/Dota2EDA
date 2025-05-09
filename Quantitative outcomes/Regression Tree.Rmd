@@ -1,0 +1,74 @@
+---
+title: "Regression Tree"
+author: "Jia Ren"
+date: "2025-05-09"
+output: html_document
+---
+
+# Load data
+
+```{r setup, include=FALSE}
+df <- read.csv("630finaldata.csv")
+df$Strength_picked_r[df$Strength_picked_r %in% 1:5] <- 1
+df$Strength_picked_d[df$Strength_picked_d %in% 1:5] <- 1
+df$Agility_picked_r[df$Agility_picked_r %in% 1:5] <- 1
+df$Agility_picked_d[df$Agility_picked_d %in% 1:5] <- 1
+df$Intelligence_picked_r[df$Intelligence_picked_r %in% 1:5] <- 1
+df$Intelligence_picked_d[df$Intelligence_picked_d %in% 1:5] <- 1
+df$Universal_picked_r[df$Universal_picked_r %in% 1:5] <- 1
+df$Universal_picked_d[df$Universal_picked_d %in% 1:5] <- 1
+```
+
+# Tree
+
+- Regression Tree greatly cuts errors compared to previous linear models (RMSE(tree) = 423.7  vs. RMSE(lm) = 2044.6 )
+- The most important variables are the scores of Radiant, Dire; and the variables related to team fights. 
+
+```{r}
+library(rpart)
+library(rpart.plot)
+
+# fit a full tree
+set.seed(2025)
+tree_full <- rpart(
+  duration ~ region
+           + Strength_picked_r + Strength_picked_d
+           + Agility_picked_r  + Agility_picked_d
+           + Intelligence_picked_r + Intelligence_picked_d
+           + Universal_picked_r    + Universal_picked_d
+           + first_blood_time
+           + dire_score + radiant_score  
+           + poly(exp_15min, 2)           
+           + teamfight_duration + teamfight_frequency
+           + Tteamfight_deaths,
+  data    = df,
+  method  = "anova",        
+  control = rpart.control(
+    cp       = 0.001,      
+    minsplit = 20,          
+    xval     = 10           
+  )
+)
+
+#  examine the complexity table
+printcp(tree_full)
+opt_idx <- which.min(tree_full$cptable[,"xerror"])
+opt_cp  <- tree_full$cptable[opt_idx,"CP"]
+
+#  prune 
+tree_pruned <- prune(tree_full, cp = opt_cp)
+
+#  plot 
+rpart.plot(
+  tree_pruned,
+  type         = 2,        
+  extra        = 101,      
+  fallen.leaves= TRUE
+)
+
+#  variable importance
+tree_pruned$variable.importance
+
+rmse_tree <- sqrt(mean((df$duration - predict(tree_pruned, df))^2))
+rmse_tree
+```
