@@ -5,32 +5,16 @@ date: "2025-05-09"
 output: html_document
 ---
 
-# Load data
-
-```{r setup, include=FALSE}
-df <- read.csv("630finaldata.csv")
-df$Strength_picked_r[df$Strength_picked_r %in% 1:5] <- 1
-df$Strength_picked_d[df$Strength_picked_d %in% 1:5] <- 1
-df$Agility_picked_r[df$Agility_picked_r %in% 1:5] <- 1
-df$Agility_picked_d[df$Agility_picked_d %in% 1:5] <- 1
-df$Intelligence_picked_r[df$Intelligence_picked_r %in% 1:5] <- 1
-df$Intelligence_picked_d[df$Intelligence_picked_d %in% 1:5] <- 1
-df$Universal_picked_r[df$Universal_picked_r %in% 1:5] <- 1
-df$Universal_picked_d[df$Universal_picked_d %in% 1:5] <- 1
-```
-
-# Tree
-
-- Regression Tree greatly cuts errors compared to previous linear models (RMSE(tree) = 423.7  vs. RMSE(lm) = 2044.6 )
-- The most important variables are the scores of Radiant, Dire; and the variables related to team fights. 
-
 ```{r}
-library(rpart)
-library(rpart.plot)
+library(tree)
+set.seed(1)
+n       <- nrow(df)
+train_i <- sample(seq_len(n), size = 0.9 * n)
 
-# fit a full tree
-set.seed(2025)
-tree_full <- rpart(
+df_train <- df[ train_i, ]
+df_test  <- df[-train_i, ]
+
+tree_full <- tree(
   duration ~ region
            + Strength_picked_r + Strength_picked_d
            + Agility_picked_r  + Agility_picked_d
@@ -41,34 +25,39 @@ tree_full <- rpart(
            + poly(exp_15min, 2)           
            + teamfight_duration + teamfight_frequency
            + Tteamfight_deaths,
-  data    = df,
-  method  = "anova",        
-  control = rpart.control(
-    cp       = 0.001,      
-    minsplit = 20,          
-    xval     = 10           
-  )
+  data = df_train
 )
 
-#  examine the complexity table
-printcp(tree_full)
-opt_idx <- which.min(tree_full$cptable[,"xerror"])
-opt_cp  <- tree_full$cptable[opt_idx,"CP"]
+cv_tree <- cv.tree(tree_full, FUN = prune.tree, K = 10)
 
-#  prune 
-tree_pruned <- prune(tree_full, cp = opt_cp)
+plot(cv_tree$size, cv_tree$dev, type = "b",
+     xlab = "Number of Terminal Nodes",
+     ylab = "Cross‐Validated Sum‐of‐Squares Error",
+     main = "10‑Fold CV: Error vs. Tree Size")
 
-#  plot 
-rpart.plot(
-  tree_pruned,
-  type         = 2,        
-  extra        = 101,      
-  fallen.leaves= TRUE
-)
+opt_size <- cv_tree$size[which.min(cv_tree$dev)]
+cat("Optimal tree size (terminal nodes) =", opt_size, "\n")
 
-#  variable importance
-tree_pruned$variable.importance
+tree_pruned <- prune.tree(tree_full, best = opt_size)
 
-rmse_tree <- sqrt(mean((df$duration - predict(tree_pruned, df))^2))
-rmse_tree
+n  <- nrow(df)
+K  <- 10
+sse_per_fold_avg <- min(cv_tree$dev)
+cv_rmse <- sqrt(sse_per_fold_avg * K / n)
+cat("10‑fold CV RMSE ≈", round(cv_rmse, 2), "\n")
+plot(tree_pruned)
+text(tree_pruned, pretty = 0, cex = 0.8)
+
+
+pred_test   <- predict(tree_pruned, newdata = df_test)
+actual_test <- df_test$duration
+
+SSE <- sum((actual_test - pred_test)^2)
+SST <- sum((actual_test - mean(actual_test))^2)
+
+R2  <- 1 - SSE/SST
+cat("Test‑set R² =", round(R2, 3), "\n")
+
+test_mse <- mean((pred_test - actual_test)^2)
+cat("Test MSE =", round(test_mse, 3), "\n")
 ```
