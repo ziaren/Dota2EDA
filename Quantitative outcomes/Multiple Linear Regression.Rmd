@@ -17,6 +17,16 @@ df$Intelligence_picked_r[df$Intelligence_picked_r %in% 1:5] <- 1
 df$Intelligence_picked_d[df$Intelligence_picked_d %in% 1:5] <- 1
 df$Universal_picked_r[df$Universal_picked_r %in% 1:5] <- 1
 df$Universal_picked_d[df$Universal_picked_d %in% 1:5] <- 1
+
+df$region <- factor(df$region)
+df$Strength_picked_r <- factor(df$Strength_picked_r)
+df$Strength_picked_d <- factor(df$Strength_picked_d)
+df$Agility_picked_r <- factor(df$Agility_picked_r)
+df$Agility_picked_d <- factor(df$Agility_picked_d)
+df$Intelligence_picked_r <- factor(df$Intelligence_picked_r)
+df$Intelligence_picked_d <- factor(df$Intelligence_picked_d)
+df$Universal_picked_r <- factor(df$Universal_picked_r)
+df$Universal_picked_d <- factor(df$Universal_picked_d)
 ```
 
 # Multiple linear regression
@@ -30,17 +40,17 @@ df$Universal_picked_d[df$Universal_picked_d %in% 1:5] <- 1
 	- Moderate explanatory power: Adjusted R-squared 0.3023 
 
 ```{r}
-df$region <- factor(df$region)
-df$Strength_picked_r <- factor(df$Strength_picked_r)
-df$Strength_picked_d <- factor(df$Strength_picked_d)
-df$Agility_picked_r <- factor(df$Agility_picked_r)
-df$Agility_picked_d <- factor(df$Agility_picked_d)
-df$Intelligence_picked_r <- factor(df$Intelligence_picked_r)
-df$Intelligence_picked_d <- factor(df$Intelligence_picked_d)
-df$Universal_picked_r <- factor(df$Universal_picked_r)
-df$Universal_picked_d <- factor(df$Universal_picked_d)
+set.seed(1)
+n       <- nrow(df)
+train_i <- sample(seq_len(n), size = 0.9 * n)
 
-model <- lm(
+df_train <- df[ train_i, ]
+df_test  <- df[-train_i, ]
+
+train_ctrl <- trainControl(method = "cv",
+                           number = 10) 
+
+cv_model <- train(
   duration ~ region
            + Strength_picked_r + Strength_picked_d
            + Agility_picked_r  + Agility_picked_d
@@ -52,13 +62,21 @@ model <- lm(
            + teamfight_duration
            + Tteamfight_deaths
            + teamfight_frequency,
-  data = df
+  data      = df_train,
+  method    = "lm",
+  trControl = train_ctrl
 )
 
-summary(model)
+cv_model$results
 
-par(mfrow = c(2,2))
-plot(model)
+preds <- predict(cv_model, newdata = df_test)
+res <- postResample(pred = preds, obs = df_test$duration)
+rmse_test <- res["RMSE"]
+rmse_test
+r2_test   <- res["Rsquared"]
+r2_test
+mse_test  <- rmse_test^2
+mse_test
 ```
 
 ## Improved models
@@ -71,34 +89,32 @@ plot(model)
   
   
 ```{r}
-df$region <- factor(df$region)
-df$Strength_picked_r <- factor(df$Strength_picked_r)
-df$Strength_picked_d <- factor(df$Strength_picked_d)
-df$Agility_picked_r <- factor(df$Agility_picked_r)
-df$Agility_picked_d <- factor(df$Agility_picked_d)
-df$Intelligence_picked_r <- factor(df$Intelligence_picked_r)
-df$Intelligence_picked_d <- factor(df$Intelligence_picked_d)
-df$Universal_picked_r <- factor(df$Universal_picked_r)
-df$Universal_picked_d <- factor(df$Universal_picked_d)
 
-model_2 <- lm(
+cv_model_2 <- train(
   duration ~ region
            + Strength_picked_r + Strength_picked_d
            + Agility_picked_r  + Agility_picked_d
            + Intelligence_picked_r + Intelligence_picked_d
            + Universal_picked_r    + Universal_picked_d
            + first_blood_time
-           + dire_score + radiant_score + dire_score * radiant_score
+           + dire_score * radiant_score
            + poly(exp_15min, 2)
-           + teamfight_duration
            + Tteamfight_deaths
-           + teamfight_frequency + teamfight_duration * teamfight_frequency,
-  data = df
+           + teamfight_duration * teamfight_frequency,
+  data      = df_train,
+  method    = "lm",
+  trControl = train_ctrl
 )
 
-summary(model_2)
+cv_model_2$results
 
-par(mfrow = c(2,2))
-plot(model_2)
+preds_2 <- predict(cv_model_2, newdata = df_test)
+res_2 <- postResample(pred = preds, obs = df_test$duration)
+rmse_test_2 <- res["RMSE"]
+rmse_test_2
+r2_test_2   <- res["Rsquared"]
+r2_test_2
+mse_test_2  <- rmse_test^2
+mse_test_2
 ```
   
