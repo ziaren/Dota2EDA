@@ -44,6 +44,9 @@ pred_test    <- predict(bag_rf_cv, newdata = df_test)
 test_mse     <- mean((pred_test - df_test$duration)^2)
 test_r2      <- 1 - sum((pred_test - df_test$duration)^2) /
                    sum((df_test$duration - mean(df_test$duration))^2)
+test_rmse <- sqrt(test_mse)
 
-cat("Hold‑out Test MSE  =", round(test_mse, 2), "\n")
-cat("Hold‑out Test R²   =", round(test_r2,  3), "\n")
+cat("Test RMSE =", round(test_rmse, 2), "\n")
+
+cat("Test MSE  =", round(test_mse, 2), "\n")
+cat("Test R²   =", round(test_r2,  3), "\n")
